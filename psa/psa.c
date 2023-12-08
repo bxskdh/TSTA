@@ -535,9 +535,10 @@ static inline void trace()
 		n--;
 	}
 
-	FILE* fptr = fopen("r1.txt", "w");
+	FILE* fptr = fopen("r1.fa", "w");
+	fputs(">1\n",fptr);
 	fputs(a, fptr);
-	fputs("\n", fptr);
+	fputs("\n>2\n", fptr);
 	fputs(b, fptr);
 	fclose(fptr);
 }
