@@ -4,7 +4,7 @@
 #include <limits.h>
 #include "poa.h"
 
-int tp1(topo* s, poa* p, int subs)
+static inline int tp1(topo* s, poa* p, int subs)
 {
 	s->sort[subs] = p;
 	s->sort[subs]->node_logo = 0;
@@ -63,7 +63,7 @@ int tp1(topo* s, poa* p, int subs)
 	return subs;
 }
 
-topo* toposort1(topo* s)
+static inline topo* toposort1(topo* s)
 {
 	int s1 = 0;
 	for (int i = 0; i < s->len; i++)
@@ -116,7 +116,7 @@ topo* toposort1(topo* s)
 	return s;
 }
 
-topo* modify(topo* p)
+static inline topo* modify(topo* p)
 {
 	topo* s;
 	int max = INT_MIN;
@@ -139,7 +139,7 @@ topo* modify(topo* p)
 		for (int i = 0; i < p->sort[max_i]->out; i++)
 		{
 			for (int j = 0; j < p->sort[max_i]->next[i]->in; j++)
-				if (p->sort[max_i]->next[i]->pre[j]->node_sorce < p->sort[max_i]->node_sorce)
+				if (p->sort[max_i]->next[i]->pre[j]->node_sorce < p->sort[max_i]->node_sorce && p->sort[max_i]->next[i]->pre[j]->node_sorce > 0)
 					p->sort[max_i]->next[i]->pre[j]->node_sorce = -p->sort[max_i]->next[i]->pre[j]->node_sorce;
 			p->sort[max_i]->next[i]->node_logo = 4;
 		}
@@ -176,7 +176,7 @@ topo* modify(topo* p)
 	return s;
 }
 
-int tp(topo* s, poa* p, int subs)
+static inline int tp(topo* s, poa* p, int subs)
 {
 	s->sort[subs] = p;
 	s->sort[subs]->node_logo = 0;
@@ -202,7 +202,7 @@ int tp(topo* s, poa* p, int subs)
 	return subs;
 }
 
-topo* toposort(topo* s)
+static inline topo* toposort(topo* s)
 {
 	int s1 = 0;
 	for (int i = 0; i < s->len; i++)
@@ -254,7 +254,6 @@ topo* t_sort(topo* g, int num)
 		s = toposort1(g);
 		s = modify(s);
 	}
-
 	for (int i = 0; i < s->len; i++)
 		s->unsort[i] = s->sort[i];	
 	return s;

@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "poa.h"
-#include "../pthreadpool/pthreadpool.h"
+#include "pthreadpool.h"
 #include <unistd.h>
 #include <semaphore.h>
 #include <pthread.h>
@@ -13,6 +13,7 @@
 #define nconvert(n) (maxtag > 0 ? (!!(n / maxtag)) * maxtag + (!(n / maxtag)) * (n % maxtag) : 0)
 #define NUM2(num2) ((num2) / L) * L + ((((num2) % L) % W) * B + (((num2) % L) / W))
 
+int s_len;//temp
 char z = 0;
 extern char M, X, E, O;
 extern int bS, L, B, W;
@@ -161,13 +162,13 @@ poa* poa_build_init(topo* p, char a[], int sum)
 	return head;
 }
 
-void block_line_alignment(int block_i, int block_j, int block_l, poa* row, char** f_temp, char** r_s, char* h_g, char* v0, char* seq, int nv, int pc2, int* pd, int* te)
+void block_line_alignment(int block_i, int block_j, int block_l, poa* row, char** f_temp, char** r_s, char* h_g, char* v0, char* seq, int nv, int pc2, int* pd, int* te, char** VC2, char** VC1, char* vc_1, char* vc_2)
 {
 	int m1, m2, m3;
 	m1 = m2 = m3 = 0;
-	int logo = 20;
-	int Logo = 40;
-	//int Logo1 = 40;
+	char logo = -6;
+	char Logo1 = 60;
+	char Logo = 100;
 	short reduce = 0;
 	int pre_num = row->in;
 	if (pre_num == 0)
@@ -189,7 +190,6 @@ void block_line_alignment(int block_i, int block_j, int block_l, poa* row, char*
 	for (int i = 0; i < pre_num; i++)
 		pd[i] = (row->pre[i]->node_logo / 3) * pc2;
 	int pc1 = (row->node_logo / 3) * pc2;
-	int se, m;
 
 	if (block_i <= lmaxtag && block_l == block_j - 1 && row->in != 0)
 	{
@@ -202,24 +202,60 @@ void block_line_alignment(int block_i, int block_j, int block_l, poa* row, char*
 		{
 			te[i] = row->frist_col_sorce - row->pre[i]->frist_col_sorce;
 			if (te[i] > Logo)
+			{
 				v0[i] = Logo;
+				if(te[i] - Logo > 127)
+				{
+					vc_2[i] = VC2[i][0] = (te[i] - Logo - 127) > 127 ? 127 : (te[i] - Logo - 127);
+					vc_1[i] = VC1[i][0] = 127;
+				}
+				else
+				{
+					vc_2[i] = VC2[i][0] = 0;
+					vc_1[i] = VC1[i][0] = te[i] - Logo;
+				}
+			}
 			else
+			{
 				v0[i] = te[i];
+				vc_2[i] = VC2[i][0] = 0;
+				vc_1[i] = VC1[i][0] = 0;
+			}
 		}
 	}
 	else
 	{
 		if (row->pre[0]->sub == -1)
+		{
 			v0[0] = row->simple_sorce[nv] - (nv * L * E + (nv > 0 ? O : 0));
+			vc_2[0] = VC2[0][0] = 0;
+			vc_1[0] = VC1[0][0] = 0;
+		}
 		else
 		{
 			for (int i = 0; i < pre_num; i++)
 			{
 				te[i] = row->simple_sorce[nv] - row->pre[i]->simple_sorce[nv];
 				if (te[i] > Logo)
-					v0[i] = Logo;
+				{
+                                       	v0[i] = Logo;
+	                                if(te[i] - Logo > 127)
+        	                        {
+                	                        vc_2[i] = VC2[i][0] = (te[i] - Logo - 127) > 127 ? 127 : (te[i] - Logo - 127);
+                        	                vc_1[i] = VC1[i][0] = 127;
+                        	        }
+                                	else
+                                	{
+                                        	vc_2[i] = VC2[i][0] = 0;
+                                        	vc_1[i] = VC1[i][0] = te[i] - Logo;
+                                	}
+				}
 				else
+				{
 					v0[i] = te[i];
+					vc_2[i] = VC2[i][0] = 0;
+                               		vc_1[i] = VC1[i][0] = 0;
+				}
 			}
 		}	
 	}
@@ -232,13 +268,13 @@ void block_line_alignment(int block_i, int block_j, int block_l, poa* row, char*
 			for (int i = 0; i < row->in; i++)
 				row->f0[i] = v0[i] + E + O;
 	}
-
-	__mxxxi zero, Smin, h, max, emax, eumax, source, source_num, esource, esource_num, fsource, s0, s1, s2, s3, s4, s5, s6, temp, temp1, mat, mis, egap, ogap, base, N;
-	__mask mask, mask1, mask2, mask3, SN ,SM, SX;
-	__mxxxi t[pre_num], e[pre_num], eu[pre_num], ev[pre_num], f[pre_num], fv[pre_num], q[pre_num], v[pre_num], sum[pre_num];	
-
+	__mxxxi zero, top, Smin, h, max, emax, eumax, source, source_num, esource, esource_num, fsource, s0, s1, s2, s3, s4, s5, s6, temp, temp1, temp2, mat, mis, egap, ogap, base, N, z;
+	__mask mask, mask1, mask2, mask3, mask4, mask5, SN ,SM, SX;
+	__mxxxi y[pre_num], vc2[pre_num], vc1[pre_num], vc0[pre_num], diff[pre_num], t[pre_num], e[pre_num], eu[pre_num], ev[pre_num], f[pre_num], fv[pre_num], q[pre_num], v[pre_num], sum[pre_num];
+	z = mm_set1_epi8(Logo1);
 	zero = mm_setzero();
-	Smin = mm_set1_epi8(MIN);
+	top = mm_set1_epi8(127);
+	Smin = mm_set1_epi8(MIN);	
 	for (int i = 0; i < pre_num; i++)
 	{
 		sum[i] = mm_setzero();
@@ -249,56 +285,62 @@ void block_line_alignment(int block_i, int block_j, int block_l, poa* row, char*
 		}
 		mm_store((__mxxxi*)r_s[i], sum[i]);
 	}
-
-        if (pre_num != 1)
+        
+	if (pre_num != 1)
         {
                 for (int i = 0; i < pre_num; i++)
                         f_temp[i][0] = v0[i];
                 for (int j = 1; j < B; j++)
                 {
 			for (int i = 0; i < pre_num; i++)
-				te[i] = te[i] - r_s[i][j - 1] + r_s[0][j - 1];
-			//for (int i = 0; i < pre_num; i++)
-			//{
-			//	if (te[i] < -logo)
-			//	{
-					m1 = te[0];
-					for (int s = 1; s < pre_num; s++)
-					{
-						if (te[s] < m1)
-							m1 = te[s];
-					}
-					m2 = -logo - m1;
-					for (int i = 0; i < pre_num; i++)
-						if (te[i] + m2 > Logo)
-							f_temp[i][j] = Logo;
-						else
-							f_temp[i][j] = te[i] + m2;
-			//		z = 1;
-			//		break;
-			//	}
-			//}
-			//if (z == 0)
-			//{
-			//	for (int i = 0; i < pre_num; i++)
-			//	{
-			//		if (te[i] > Logo)
-			//			v_temp[i][j] = Logo;
-			//		else
-			//			v_temp[i][j] = te[i];
-			//	}
-			//}
-			//z = 0;
+			{
+				te[i] = te[i] - r_s[i][j - 1] + W * E;
+			}
+			m1 = te[0];
+			for (int s = 1; s < pre_num; s++)
+			{
+				if (te[s] < m1)
+					m1 = te[s];
+			}
+			m2 = logo - m1;
+			for (int i = 0; i < pre_num; i++)
+			{
+				if (te[i] + m2 > Logo)
+				{
+					f_temp[i][j] = Logo;
+					if(te[i] + m2 - Logo > 127)
+                                        {
+                                                VC2[i][j] = (te[i] + m2 - Logo - 127) > 127 ? 127 : (te[i] + m2 - Logo - 127);
+                                                VC1[i][j] = 127;
+                                        }
+                                        else
+                                        {
+                                                VC2[i][j] = 0;
+                                                VC1[i][j] = te[i] + m2 - Logo;
+                                        }
+				}
+				else
+				{
+					f_temp[i][j] = te[i] + m2;
+					VC2[i][j] = 0;
+					VC1[i][j] = 0;
+				}
+			}
                 }
                 for (int i = 0; i < pre_num; i++)
                         v[i] = mm_load((__mxxxi*)f_temp[i]);
         }
 	else
 	{
+		for (int j = 0; j < B; j++)
+		{
+			VC2[0][j] = 0;
+			VC1[0][j] = 0;
+		}
+		vc_1[0] = vc_2[0] = 0;
 		v[0] = mm_set1_epi8(E);
 		v[0] = mm_insert_epi8(v[0], v0[0], 0);
 	}
-
 	mat = mm_set1_epi8(M);
 	mis = mm_set1_epi8(X);
 	egap = mm_set1_epi8(E);
@@ -307,6 +349,8 @@ void block_line_alignment(int block_i, int block_j, int block_l, poa* row, char*
 	N = mm_set1_epi8('N');
 	for (int j = 0; j < pre_num; j++)
 	{
+		vc2[j] = mm_load((__mxxxi*)VC2[j]);
+		vc1[j] = mm_load((__mxxxi*)VC1[j]);///
 		f[j] = Smin;
 		f[j] = mm_insert_epi8(f[j], row->f0[j], 0);
 	}
@@ -323,19 +367,41 @@ void block_line_alignment(int block_i, int block_j, int block_l, poa* row, char*
 			e[j] = mm_load((__mxxxi*)row->pre[j]->esorce + pd[j] + i);
 			temp = mm_max_epi8(f[j], h);
 			temp = mm_max_epi8(e[j], temp);
-			temp = mm_sub_epi8(temp, v[j]);
+			temp = mm_subs_epi8(temp, v[j]);
+			mask4 = mm_cmpgt_epi8(v[j], z);
+			temp = mm_blendv_epi8(temp, ogap, mask4);
 			s1 = mm_max_epi8(s1, temp);
 		}
 		for (int j = 0; j < pre_num; j++)
 		{
-			f[j] = mm_add_epi8(f[j], egap);
-			temp = mm_add_epi8(s1, ogap);
-			temp = mm_add_epi8(temp, v[j]);
-			f[j] = mm_max_epi8(f[j], temp);
-			f[j] = mm_sub_epi8(f[j], t[j]);
+			temp = mm_sub_epi8(t[j], egap);
+			temp = mm_subs_epi8(f[j], temp);
+			temp1 = mm_adds_epi8(s1, ogap);
+			temp1 = mm_subs_epi8(temp1, t[j]);
+			temp1 = mm_adds_epi8(v[j], temp1);
+			f[j] = mm_max_epi8(temp, temp1);
 
-			v[j] = mm_add_epi8(s1, v[j]);
-			v[j] = mm_sub_epi8(v[j], t[j]);
+			temp1 = mm_subs_epi8(s1, t[j]);
+			vc0[j] = mm_adds_epi8(v[j], temp1);
+
+			mask4 = mm_cmpgt_epi8(temp1, zero);
+			temp1 = mm_blendv_epi8(zero, temp1, mask4);
+			temp2 = mm_subs_epi8(top, v[j]);
+			y[j] = mm_subs_epu8(temp1, temp2);
+
+			v[j] = mm_adds_epi8(vc0[j], vc1[j]);
+			
+			mask5 = mm_cmpeq_epi8(vc1[j], zero);
+			temp2 = mm_subs_epu8(top, vc0[j]);
+			diff[j] = mm_blendv_epi8(temp2, zero, mask5);
+			
+			temp2 = vc1[j];
+			vc1[j] = mm_subs_epu8(vc1[j], diff[j]);
+			vc1[j] = mm_adds_epi8(vc1[j], vc2[j]); 
+			temp2 = mm_subs_epu8(vc1[j], temp2);
+			vc2[j] = mm_subs_epu8(vc2[j], diff[j]);
+			vc2[j] = mm_adds_epi8(vc2[j], y[j]);
+			vc2[j] = mm_subs_epu8(vc2[j], temp2);
 		}
 	}	
 
@@ -343,32 +409,44 @@ void block_line_alignment(int block_i, int block_j, int block_l, poa* row, char*
 	{
 		mm_store((__mxxxi*)f_temp[j], f[j]);
 		te[j] = f_temp[j][0];
-		for (int x = 1; x < B; x++)
+		for (int x = 1; x < B - 1; x++)
 		{
 			te[j] = te[j] - r_s[j][x] + W * E;
-			if (te[j] > f_temp[j][x] && te[j] > Logo)
-				f_temp[j][x] = Logo;
-			else if (te[j] > f_temp[j][x] && te[j] <= Logo)
+			if (te[j] > f_temp[j][x] && te[j] > 125)
+			{
+				f_temp[j][x] = 125;
+			}
+			else if (te[j] > f_temp[j][x] && te[j] <= 125)
+			{
 				f_temp[j][x] = te[j];
-			else if (te[j] <= f_temp[j][x] && f_temp[j][x] > Logo)
+			}
+			else if (te[j] <= f_temp[j][x] && f_temp[j][x] > 125)
 			{
 				te[j] = f_temp[j][x];
-				f_temp[j][x] = Logo;
+				f_temp[j][x] = 125;
 			}
 			else
+			{
 				te[j] = f_temp[j][x];
+			}
 		}
-
 		f[j] = mm_load((__mxxxi*)f_temp[j]);
-		temp1 = mm_sub_epi8(f[j], egap);
+		temp1 = mm_subs_epi8(f[j], egap);
 		f[j] = mm_slli(f[j]);
 		f[j] = mm_insert_epi8(f[j], row->f0[j], 0);
 
-		v[j] = mm_max_epi8(temp1, v[j]);
-		v[j] = mm_slli(v[j]);
-		v[j] = mm_insert_epi8(v[j], v0[j], 0);
-	}
+		vc0[j] = mm_max_epi8(temp1, v[j]);
+		vc0[j] = mm_slli(vc0[j]);
+		vc0[j] = mm_insert_epi8(vc0[j], v0[j], 0);
+		
+                vc1[j] = mm_slli(vc1[j]);
+                vc1[j] = mm_insert_epi8(vc1[j], vc_1[j], 0);
+		v[j] = mm_adds_epi8(vc0[j], vc1[j]);
 
+		vc2[j] = mm_slli(vc2[j]);
+                vc2[j] = mm_insert_epi8(vc2[j], vc_2[j], 0);
+	}
+	
 	sum[0] = zero;
 	s0 = mm_set1_epi8(42);
 	s2 = mm_add_epi8(s0, s0);
@@ -376,6 +454,7 @@ void block_line_alignment(int block_i, int block_j, int block_l, poa* row, char*
 	s4 = mm_set1_epi8(1);
 	s5 = mm_add_epi8(s0, s4);
 	s6 = mm_add_epi8(s4, s4);
+
 	for (int i = 0; i < W; i++)
 	{
 		h = mm_load((__mxxxi*)seq + pc2 + i);
@@ -388,13 +467,15 @@ void block_line_alignment(int block_i, int block_j, int block_l, poa* row, char*
 		{
 			t[j] = mm_load((__mxxxi*)row->pre[j]->sorce + pd[j] + i);
 			e[j] = mm_load((__mxxxi*)row->pre[j]->esorce + pd[j] + i);
-			fv[j] = mm_sub_epi8(f[j], v[j]);
-			eu[j] = mm_sub_epi8(e[j], v[j]);
-			q[j] = mm_sub_epi8(h, v[j]);
+			fv[j] = mm_subs_epi8(f[j], v[j]);
+			eu[j] = mm_subs_epi8(e[j], v[j]);
+			q[j] = mm_subs_epi8(h, v[j]);
 			temp = mm_max_epi8(fv[j], eu[j]);
 			temp = mm_max_epi8(temp, q[j]);
+			mask4 = mm_cmpgt_epi8(v[j], z);
+                        temp = mm_blendv_epi8(temp, ogap, mask4);
 			max = mm_max_epi8(max, temp);
-			ev[j] = mm_sub_epi8(e[j], t[j]);
+			ev[j] = mm_subs_epi8(e[j], t[j]);
 			eumax = mm_max_epi8(eumax, eu[j]);
 		}
 		max = mm_blendv_epi8(max, zero, SN);
@@ -428,25 +509,24 @@ void block_line_alignment(int block_i, int block_j, int block_l, poa* row, char*
 		//esource+fsource
 		esource = fsource = s4;
 		esource_num = zero;
-		temp = mm_add_epi8(max, ogap);
+		temp = mm_adds_epi8(max, ogap);
 		emax = Smin;
 		for (int j = pre_num - 1; j >= 0; j--)
 		{
-			f[j] = mm_add_epi8(f[j], egap);
-			s1 = mm_add_epi8(temp, v[j]);
+			f[j] = mm_adds_epi8(f[j], egap);
+			s1 = mm_adds_epi8(temp, v[j]);
 			mask1 = mm_cmpeq_epi8(f[j], s1);
 			f[j] = mm_max_epi8(f[j], s1);
-			f[j] = mm_sub_epi8(f[j], t[j]);
-
+			f[j] = mm_subs_epi8(f[j], t[j]);
 			mask = mm_cmpeq_epi8(fv[j], ogap);
 			fsource = mm_blendv_epi8(fsource, s6, mask);
 
-			e[j] = mm_add_epi8(e[j], egap);
-			e[j] = mm_sub_epi8(e[j], v[j]);
+			e[j] = mm_adds_epi8(e[j], egap);
+			e[j] = mm_subs_epi8(e[j], v[j]);
 			mask2 = mm_cmpeq_epi8(temp, e[j]);
 			temp1 = mm_max_epi8(temp, e[j]);
 			emax = mm_max_epi8(emax, temp1);
-			
+
 			mask3 = mm_cmpeq_epi8(eu[j], eumax);
 			esource_num = mm_blendv_epi8(esource_num, mm_set1_epi8(j), mask3);
 			mask = mm_cmpeq_epi8(ev[j], ogap);
@@ -457,15 +537,35 @@ void block_line_alignment(int block_i, int block_j, int block_l, poa* row, char*
 			mask = mm_and_epi8(mask3, mask2);
 			esource = mm_blendv_epi8(esource, temp1, mask);
 
-			v[j] = mm_add_epi8(max, v[j]);
-			v[j] = mm_sub_epi8(v[j], t[j]);
+                        temp1 = mm_subs_epi8(max, t[j]);
+                        vc0[j] = mm_adds_epi8(v[j], temp1);
+
+			mask4 = mm_cmpgt_epi8(temp1, zero);
+			temp1 = mm_blendv_epi8(zero, temp1, mask4);
+                        temp2 = mm_subs_epi8(top, v[j]);
+                        y[j] = mm_subs_epu8(temp1, temp2);
+
+                        v[j] = mm_adds_epi8(vc0[j], vc1[j]);
+
+                        mask5 = mm_cmpeq_epi8(vc1[j], zero);
+                        temp2 = mm_subs_epu8(top, vc0[j]);
+                        diff[j] = mm_blendv_epi8(temp2, zero, mask5);
+
+                        temp2 = vc1[j];
+                        vc1[j] = mm_subs_epu8(vc1[j], diff[j]);
+                        vc1[j] = mm_adds_epi8(vc1[j], vc2[j]); 
+                        temp2 = mm_subs_epu8(vc1[j], temp2);
+                        vc2[j] = mm_subs_epu8(vc2[j], diff[j]);
+                        vc2[j] = mm_adds_epi8(vc2[j], y[j]);
+                        vc2[j] = mm_subs_epu8(vc2[j], temp2);
+			/*temp1 = mm_subs_epi8(max, t[j]);
+                        v[j] = mm_adds_epi8(v[j], temp1);*/
 		}
 		temp1 = mm_sub_epi8(zero, fsource);
 		fsource = mm_blendv_epi8(fsource, temp1, mask1);
 		mm_store((__mxxxi*)row->fsource + pc2 + i, fsource);//-
 		mm_store((__mxxxi*)row->esource + pc2 + i, esource);//-
 		mm_store((__mxxxi*)row->esorce + pc1 + i, emax);//-
-	
 	}
 	for (int j = 0; j < pre_num; j++)
 		row->f0[j] = mm_extract_epi8(f[j]);
@@ -473,6 +573,7 @@ void block_line_alignment(int block_i, int block_j, int block_l, poa* row, char*
 	s1 = mm_hadd_epi8(s1);
 	reduce = mm_reduce_epi8(s1);
 	row->simple_sorce[nv + 1] = row->simple_sorce[nv] + reduce;
+
         if (row->out == 0 && block_i >= maxtag && block_l == 0)
                 row->lastsorce = row->simple_sorce[nv + 1];
 
@@ -513,13 +614,24 @@ void block_alignment(void* pa)
 	int pc2 = nv * L / B;
 
 	char** f_temp = (char**)malloc(num * sizeof(char*));///
-	for (int i = 0; i < num; i++)
-		f_temp[i] = (char*)mm_malloc(B * sizeof(char));
+        for (int i = 0; i < num; i++)
+                f_temp[i] = (char*)mm_malloc(B * sizeof(char));
+
+        char** VC2 = (char**)malloc(num * sizeof(char*));///
+        for (int i = 0; i < num; i++)
+                VC2[i] = (char*)mm_malloc(B * sizeof(char));
+	
+	char** VC1 = (char**)malloc(num * sizeof(char*));///
+        for (int i = 0; i < num; i++)
+                VC1[i] = (char*)mm_malloc(B * sizeof(char));
+
 	char** r_s = (char**)malloc(num * sizeof(char*));///g
 	for (int i = 0; i < num; i++)
 		r_s[i] = (char*)mm_malloc(B * sizeof(char));
 	char* h_g = (char*)mm_malloc(L * sizeof(char));
 	char* v0 = (char*)malloc(num * sizeof(char));
+	char* vc_1 = (char*)malloc(num * sizeof(char));
+	char* vc_2 = (char*)malloc(num * sizeof(char));
 	int* pd = (int*)malloc(num * sizeof(int));
 	int* te = (int*)malloc(num * sizeof(int));
 	a1 = (((block_i - maxtag) > 0) * (block_i - maxtag) + block_l) * L;
@@ -528,15 +640,17 @@ void block_alignment(void* pa)
 		a2 = a1 + i;
 		if (a2 >= p->len)
 			break;
-		block_line_alignment(block_i, block_j, block_l, p->sort[a2], f_temp, r_s, h_g, v0, seq, nv, pc2, pd, te);
+		block_line_alignment(block_i, block_j, block_l, p->sort[a2], f_temp, r_s, h_g, v0, seq, nv, pc2, pd, te, VC2, VC1, vc_1, vc_2);
 	}
 	for (int i = 0; i < num; i++)
 	{
+		mm_free(VC2[i]);
+		mm_free(VC1[i]);
 		mm_free(f_temp[i]);
 		mm_free(r_s[i]);
 	}
-	free(f_temp);free(r_s);
-	free(v0); mm_free(h_g); free(pd); free(te); 
+	free(VC2);free(VC1);free(f_temp);free(r_s);
+	free(v0); mm_free(h_g); free(pd); free(te); free(vc_1); free(vc_2);
         pthread_mutex_lock(&mutex);
         lock++;
         pthread_mutex_unlock(&mutex);
@@ -635,7 +749,6 @@ topo* node_fuse(topo* n, char b[], int num, int sum, int last)
 			break;
 	}
 	printf("poa_len=%d ,seq_len=%d ,trace_sub:[num1]=%d [num2]=%d ,lastsorce=%d\n", n1->len, len_b, num1, num2 ,s1);/////
-	fflush(stdout);
 	while (num1 != -1 && num2 != -1)
 	{
 		if (n1->sort[num1]->source[NUM2(num2)] / 42 == 3)
@@ -754,18 +867,20 @@ topo* node_fuse(topo* n, char b[], int num, int sum, int last)
 			{
 				if (seq[num2]->base == n1->sort[num1]->mismatch_node[s]->base)
 				{
-					if (n1->sort[num1]->pre[n1->sort[num1]->source[NUM2(num2)] % 42]->sub != -1 && num2 != 0)
+					if (num2 != 0)
 					{
-						if (n1->sort[num1]->pre[n1->sort[num1]->source[NUM2(num2)] % 42]->source[NUM2(num2 - 1)] / 42 == 1)
+						if (n1->sort[num1]->pre[n1->sort[num1]->source[NUM2(num2)] % 42]->sub != -1)
 						{
-							for (int ss = 0; ss < n1->sort[num1]->mismatch_node[s]->in; ss++)
-								if (n1->sort[num1]->mismatch_node[s]->pre[ss] == n1->sort[num1]->pre[n1->sort[num1]->source[NUM2(num2)] % 42])
-								{
-									n1->sort[num1]->mismatch_node[s]->edge_weight[ss]++;
-									s2 = -1;
-								}
+							if (n1->sort[num1]->pre[n1->sort[num1]->source[NUM2(num2)] % 42]->source[NUM2(num2 - 1)] / 42 == 1)
+							{
+								for (int ss = 0; ss < n1->sort[num1]->mismatch_node[s]->in; ss++)
+									if (n1->sort[num1]->mismatch_node[s]->pre[ss] == n1->sort[num1]->pre[n1->sort[num1]->source[NUM2(num2)] % 42])
+									{
+										n1->sort[num1]->mismatch_node[s]->edge_weight[ss]++;
+										s2 = -1;
+									}
+							}
 						}
-
 						if (s2 != -1)
 						{
 							n1->sort[num1]->mismatch_node[s]->in++;
@@ -902,7 +1017,7 @@ topo* control(topo* p, char* A, int num, int sum, ThreadPool* pool)
 		p->sort[i]->fsource = (char*)mm_malloc(length1 * sizeof(char));
 		p->sort[i]->simple_sorce = (int*)malloc((maxtag + 2) * sizeof(int));
 	}	
-	
+	s_len = p->len;//temp
 	int j = 0;
 	for (int i = 0; i < tsl; i++)
 	{
@@ -928,7 +1043,7 @@ topo* control(topo* p, char* A, int num, int sum, ThreadPool* pool)
 		}
 		while (lock != j) {}
 	}
-
+	
 	pthread_mutex_destroy(&mutex);
 	int last = maxtag + 1;
 	node_fuse(p, A, num, sum, last);

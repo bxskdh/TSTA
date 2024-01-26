@@ -13,6 +13,8 @@ make
 # Usage and run
 ## Pairwise sequence alignment
 `./TSTA_psa -M 2 -X -3 -E -2 -O -4 -T 30 -S 30 seqa.fa seqb.fa > result.txt`
+## no-backtracing PSA
+`./TSTA_psa_notrace -M 2 -X -3 -E -2 -O -4 -T 30 -S 30 seqa.fa seqb.fa > result.txt`
 ## Multiple sequence alignment
 `./TSTA_msa -M 2 -X -3 -E -2 -O -4 -T 30 -S 30 -i seq.fa > result.txt`
 # Example

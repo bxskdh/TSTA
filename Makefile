@@ -1,13 +1,13 @@
 CC = gcc
 OPTIMIZE_FLAGS = -O3
-SIMD_FLAGS = -march=native
+SIMD_FLAGS = -msse4.2 #optional:-march=native
 THREAD_FLAGS = -lpthread
 
 THREAD_SITE = pthreadpool
 THREAD_SRC = ${THREAD_SITE}/pthreadpool.h
 OTHER_SRC = msa/poa.h
 
-all : TSTA_psa TSTA_msa clean
+all : TSTA_psa TSTA_psa_notrace TSTA_msa clean
 
 #Pairwise sequence alignment
 
@@ -16,6 +16,14 @@ TSTA_psa : ${THREAD_SRC} psa.o pthreadpool.o
 
 psa.o : psa/psa.c
 	${CC} ${OPTIMIZE_FLAGS} -c psa/psa.c -o $@ ${SIMD_FLAGS}
+
+#psa-notrace
+
+TSTA_psa_notrace : ${THREAD_SRC} psa_notrace.o pthreadpool.o
+	${CC} ${OPTIMIZE_FLAGS} -o $@ psa_notrace.o pthreadpool.o ${THREAD_FLAGS}
+
+psa.o : psa/psa.c
+	${CC} ${OPTIMIZE_FLAGS} -c psa/psa_notrace.c -o $@ ${SIMD_FLAGS}
 
 #Multiple sequence alignment
 
