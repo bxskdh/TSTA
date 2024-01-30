@@ -1,6 +1,6 @@
 ﻿#include <stdio.h>
 #include <stdlib.h>
-#include "pthreadpool.h"
+#include "../pthreadpool/pthreadpool.h"
 #include <pthread.h>
 #include <string.h>
 #include <unistd.h>

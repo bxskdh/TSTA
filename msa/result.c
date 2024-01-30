@@ -39,10 +39,9 @@ void printf_con(topo* p)
 	fclose(con);
 }
 
-void printf_result(topo* p, int num)
+void printf_result(topo* p, int num, FILE* res)
 {
 	int len = 0;
-	FILE* res = fopen("msa.fa", "w");
 	char** r = (char**)malloc(num * sizeof(char*));
 	for (int i = 0; i < num; i++)
 	{
@@ -75,6 +74,4 @@ void printf_result(topo* p, int num)
 	}
 
 	printf_con(p);
-
-	fclose(res);
 }

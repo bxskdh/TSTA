@@ -22,7 +22,7 @@ psa.o : psa/psa.c
 TSTA_psa_notrace : ${THREAD_SRC} psa_notrace.o pthreadpool.o
 	${CC} ${OPTIMIZE_FLAGS} -o $@ psa_notrace.o pthreadpool.o ${THREAD_FLAGS}
 
-psa.o : psa/psa.c
+psa_notrace.o: psa/psa_notrace.c
 	${CC} ${OPTIMIZE_FLAGS} -c psa/psa_notrace.c -o $@ ${SIMD_FLAGS}
 
 #Multiple sequence alignment

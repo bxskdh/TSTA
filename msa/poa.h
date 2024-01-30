@@ -2,7 +2,8 @@
 #define TOPO_SORT
 
 #include <stdint.h>
-#include "pthreadpool.h"
+#include <stdio.h>
+#include "../pthreadpool/pthreadpool.h"
 
 #define MIN -120
 
@@ -155,5 +156,5 @@ topo* t_sort(topo* g, int num);
 //poa
 poa* poa_build_init(topo* p, char a[], int sum);
 topo* control(topo* p, char* A, int num, int sum, ThreadPool* pool);
-void printf_result(topo* p, int num);
+void printf_result(topo* p, int num, FILE* res);
 #endif

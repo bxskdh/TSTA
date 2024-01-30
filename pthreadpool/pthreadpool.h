@@ -2,20 +2,20 @@
 #define _THREADPOOL_H
 
 typedef struct ThreadPool ThreadPool;
-// ´´½¨Ïß³Ì³Ø²¢³õÊ¼»¯
+// åˆ›å»ºçº¿ç¨‹æ± å¹¶åˆå§‹åŒ–
 ThreadPool* threadPoolCreate(int max, int queueCapacity);
 //ThreadPool* threadPoolCreate(int min, int max, int queueCapacity);
 
-// Ïú»ÙÏß³Ì³Ø
+// é”€æ¯çº¿ç¨‹æ± 
 int threadPoolDestory(ThreadPool* pool);
 
-// ¸øÏß³Ì³ØÌí¼ÓÈÎÎñ
+// ç»™çº¿ç¨‹æ± æ·»åŠ ä»»åŠ¡
 void threadPoolAdd(ThreadPool* pool, void(*func)(void*), void* arg);
 
 /////////////////////
 void* worker(void* arg);
 
-// »ñÈ¡Ïß³Ì³ØÖĞ¹¤×÷µÄÏß³Ì¸öÊı
+// è·å–çº¿ç¨‹æ± ä¸­å·¥ä½œçš„çº¿ç¨‹ä¸ªæ•°
 //int threadPoolBusyNum(ThreadPool* pool);
 //int threadPoolAliveNum(ThreadPool* pool);
 //void* worker(void* arg);
