@@ -558,7 +558,7 @@ print_usage(){
     printf("-W                      the width of block(Multiplication of simd data width) [default: 16]\n");
     printf("-i                      the input sequence(fasta)\n");
 	printf("-o                      the output file [default: output.txt]\n");
-    printf("example:\n./go -M 2 -X -3 -E -2 -O -4 -T 10 -S 10 -i seq1.fa,seq2.fa -o output.txt\n");
+    printf("example:\n./TSTA_psa -i seq1.fa,seq2.fa -o output.txt\n");
 }
 
 int main(int argc, char* argv[])
@@ -566,6 +566,7 @@ int main(int argc, char* argv[])
     int c;
 	char* input = NULL;
 	char* output = "output.txt";
+	int T = 10;
 	while ((c = getopt(argc, argv, "M:X:E:O:T:W:i:o:")) != -1)
 	{
 		switch (c)
@@ -583,10 +584,10 @@ int main(int argc, char* argv[])
 			O = atoi(optarg);
 			break;
 		case 'T':
-			bS = atoi(optarg);
+			T = atoi(optarg);
 			break;
 		case 'W':
-			W = atoi(optarg);
+			bS = atoi(optarg);
 			break;
 		case 'i':
 			input = optarg;
@@ -627,7 +628,6 @@ int main(int argc, char* argv[])
 	readseq(input);
 	pthread_mutex_init(&mutex, NULL);
 	unsigned int tsl;
-
 	tsl = (length[0] + length[1]) / L - 1;
 	fmaxtag = length[1] / L - 1;//the number of first line(the max number of block)
 	lmaxtag = length[0] / L - 1;//the number of last line(the max number of block)
@@ -648,10 +648,8 @@ int main(int argc, char* argv[])
 	fback = (char**)malloc(length[3] * sizeof(char*));
 	for (int i = 0; i < length[3]; i++)
 		fback[i] = (char*)mm_malloc(length[0] * sizeof(char));
-	
-	int maxpthread = atoi(argv[10]);
+	int maxpthread = T;
 	ThreadPool* pool = threadPoolCreate(maxpthread, 100);
-
 	blockmatrix_init();
 	int j = 0;
 	for (int i = 0; i < tsl; i++)
@@ -679,7 +677,6 @@ int main(int argc, char* argv[])
 	fclose(fptr);
 	pthread_mutex_destroy(&mutex);
 	threadPoolDestory(pool);
-
 	for (int i = 0; i < 2; i++)
 		free(seq[i]);
 	free(seq);
@@ -697,7 +694,6 @@ int main(int argc, char* argv[])
 	free(back); 
 	free(eback); 
 	free(fback);
-        printf("B=%d,T=%d,maxsorce=%d\n",bS,maxpthread,ms);
-
+	printf("maxsorce=%d\n", ms);
 	return 0;
 }

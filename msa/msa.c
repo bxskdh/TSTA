@@ -82,13 +82,14 @@ static inline void print_usage()
 	printf("-W                      the width of block(Multiplication of simd data width) [default: 16]\n");
 	printf("-i                      the input sequence(MSA/fastq)\n");
 	printf("-o                      the output file [default: output.txt]\n");
-	printf("example:\n./go -M 2 -X -5 -E -2 -O -4 -T 10 -S 10 -i seq.fa -f output.txt\n");
+	printf("example:\n./TSTA_msa -i seq.fa -f output.txt\n");
 }
 
 int main(int argc,char* argv[])
 {
 	int c;
 	char* input = NULL;
+	int T = 10;
 	char* output = "output.txt";
 	while((c = getopt(argc,argv,"M:X:E:O:T:W:i:f:")) != -1)
 	{
@@ -107,10 +108,10 @@ int main(int argc,char* argv[])
 				O = atoi(optarg);
 				break;
 			case 'T':
-				bS = atoi(optarg);
+				T = atoi(optarg);
 				break;
 			case 'W':
-				W = atoi(optarg);
+				bS = atoi(optarg);
 				break;
 			case 'i':
 				input = optarg;
@@ -136,7 +137,7 @@ int main(int argc,char* argv[])
 	seq_s* seq = (seq_s*)malloc(sizeof(seq_s));
 	seq = read_seq(seq, fptr);
 	fclose(fptr);
-	int maxpthread = atoi(argv[10]);
+	int maxpthread = T;
 	ThreadPool* pool = threadPoolCreate(maxpthread, 100);
 	topo* s = (topo*)malloc(sizeof(topo));
 	poa* p = poa_build_init(s, seq->S[1], seq->seq_num / 2);

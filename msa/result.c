@@ -3,10 +3,10 @@
 #include <stdlib.h>
 #include "poa.h"
 
-void printf_con(topo* p)
+static inline
+void printf_con(topo* p, FILE* con)
 {
 	int s = 0;
-	FILE* con = fopen("consensus.fa", "w");
 	int max = p->sort[p->len - 1]->node_sorce;
 	int max_i = p->sort[p->len - 1]->sub;
 	for (int i = p->len - 2; i >= 0; i--)
@@ -36,7 +36,7 @@ void printf_con(topo* p)
 
 	fprintf(con, "consensus:\n");
 	fputs(c, con);
-	fclose(con);
+	free(c);
 }
 
 void printf_result(topo* p, int num, FILE* res)
@@ -72,6 +72,8 @@ void printf_result(topo* p, int num, FILE* res)
 		fputs(r[i], res);
 		fputs("\n", res);
 	}
-
-	printf_con(p);
+	for(int i = 0; i < num; i++)
+		free(r[i]);
+	free(r);
+	printf_con(p, res);
 }
