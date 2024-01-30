@@ -558,7 +558,7 @@ print_usage(){
     printf("-W                      the width of block(Multiplication of simd data width) [default: 16]\n");
     printf("-i                      the input sequence(fasta)\n");
 	printf("-o                      the output file [default: output.txt]\n");
-    printf("example:\n./go -M 2 -X -3 -E -2 -O -4 -T 10 -S 10 -i seq1.fa,seq2.fa -o output.txt\n");
+    printf("example:\n./go -M 2 -X -3 -E -2 -O -4 -T 10 -W 10 -i seq1.fa,seq2.fa -o output.txt\n");
 }
 
 int main(int argc, char* argv[])

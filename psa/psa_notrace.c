@@ -429,7 +429,7 @@ int main(int argc, char* argv[])
                 printf("-T                      the number of threads\n");
                 printf("-W                      the width of block(Multiplication of simd data width)\n");
                 printf("[seq1] [seq2]		the input sequence(fastq)\n");
-		printf("example:\n./go -M 2 -X -3 -E -2 -O -4 -T 10 -S 10 seq1.fa seq2.fa\n");
+		printf("example:\n./go -M 2 -X -3 -E -2 -O -4 -T 10 -W 10 seq1.fa seq2.fa\n");
                 return 0;
         }
         if(argc == 15)

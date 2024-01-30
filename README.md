@@ -12,11 +12,11 @@ make
 ```
 # Usage and run
 ## Pairwise sequence alignment
-`./TSTA_psa -M 2 -X -3 -E -2 -O -4 -T 30 -S 30 seqa.fa seqb.fa > result.txt`
+`./TSTA_psa -M 2 -X -3 -E -2 -O -4 -T 10 -W 10 -i seq1.fa,seq2.fa -o output.txt`
 ## no-backtracing PSA
-`./TSTA_psa_notrace -M 2 -X -3 -E -2 -O -4 -T 30 -S 30 seqa.fa seqb.fa > result.txt`
+`./TSTA_psa_notrace -M 2 -X -3 -E -2 -O -4 -T 10 -W 10 -i seq1.fa,seq2.fa -o output.txt`
 ## Multiple sequence alignment
-`./TSTA_msa -M 2 -X -3 -E -2 -O -4 -T 30 -S 30 -i seq.fa > result.txt`
+`./TSTA_msa -M 2 -X -5 -E -2 -O -4 -T 10 -W 10 -i seq.fa -o output.txt`
 # Example
 ```
 cd example
