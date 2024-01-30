@@ -110,7 +110,13 @@ typedef __m128i __mxxxi;
 #define MIN -100
 #define I_MIN -2000000000
 #define NUM2(j) ((j) / L) * L + ((((j) % L) % W) * B + (((j) % L) / W))
-int bS, L, W, M, X, E, O;
+int bS = 10;
+int M = 2;
+int X = -5;
+int E = -2;
+int O = -4;
+int L = 10 * block;
+int W = 10;
 int B = block;
 int* real;
 char** back, ** eback, ** fback;
@@ -170,10 +176,12 @@ static inline void aligned_free(void *buffer, int base){
 	free(p);
 }
 
-static inline void readseq(char* argv[])
+static inline void readseq(char* input)
 {
-	FILE* fptr1 = fopen(argv[13], "r");
-	FILE* fptr2 = fopen(argv[14], "r");
+	char* p = strtok(input, ",");
+	char* q = strtok(NULL, ",");
+	FILE* fptr1 = fopen(p, "r");
+	FILE* fptr2 = fopen(q, "r");
 	int a, b;
 	int offset[3];
 	if (fgetc(fptr1) == '>')
@@ -228,7 +236,6 @@ static inline void readseq(char* argv[])
 		length[0] = a + (L - a % L);
 	if (b % L != 0)
 		length[1] = b + (L - b % L);
-	printf("1:%d,2:%d,length1:%d,length2:%d\n", a, b, length[0], length[1]);
 	seq = (char**)malloc(2 * sizeof(char**));
 	seq[0] = (char*)malloc((length[0] + 1) * sizeof(char));
 	seq[1] = (char*)malloc((length[3] + 1) * sizeof(char));
@@ -458,7 +465,7 @@ static inline void block_alignment(void* p)
 	free(source);
 }
 
-static inline void trace()
+static inline void trace(FILE* fptr)
 {
 	int i, j;
 	int n = 0;
@@ -535,48 +542,89 @@ static inline void trace()
 		n--;
 	}
 
-	FILE* fptr = fopen("r1.fa", "w");
 	fputs(">1\n",fptr);
 	fputs(a, fptr);
 	fputs("\n>2\n", fptr);
 	fputs(b, fptr);
-	fclose(fptr);
+}
+
+static inline void
+print_usage(){
+    printf("-M                      the sorce of match [default: 2]\n");
+    printf("-X                      the sorce of dismatch [default: -5]\n");
+    printf("-E                      the sorce of extend-gap [default: -2]\n");
+    printf("-O                      the sorce of open-gap [default: -4]\n");
+    printf("-T                      the number of threads [default: 10]\n");
+    printf("-W                      the width of block(Multiplication of simd data width) [default: 16]\n");
+    printf("-i                      the input sequence(fasta)\n");
+	printf("-o                      the output file [default: output.txt]\n");
+    printf("example:\n./go -M 2 -X -3 -E -2 -O -4 -T 10 -S 10 -i seq1.fa,seq2.fa -o output.txt\n");
 }
 
 int main(int argc, char* argv[])
 {
-        if(argc != 15)
-        {
-                printf("-M                      the sorce of match\n");
-                printf("-X                      the sorce of dismatch\n");
-                printf("-E                      the sorce of extend-gap\n");
-		printf("-O                      the sorce of open-gap\n");
-                printf("-T                      the number of threads\n");
-                printf("-W                      the width of block(Multiplication of simd data width)\n");
-                printf("[seq1] [seq2]		the input sequence(fastq)\n");
-		printf("example:\n./go -M 2 -X -3 -E -2 -O -4 -T 10 -S 10 seq1.fa seq2.fa\n");
-                return 0;
-        }
-        if(argc == 15)
-        {
-                M = atoi(argv[2]);
-                X = atoi(argv[4]);
-                E = atoi(argv[6]);
-		O = atoi(argv[8]);
-                bS = atoi(argv[12]);
-        }
+    int c;
+	char* input = NULL;
+	char* output = "output.txt";
+	while ((c = getopt(argc, argv, "M:X:E:O:T:W:i:o:")) != -1)
+	{
+		switch (c)
+		{
+		case 'M':
+			M = atoi(optarg);
+			break;
+		case 'X':
+			X = atoi(optarg);
+			break;
+		case 'E':
+			E = atoi(optarg);
+			break;
+		case 'O':
+			O = atoi(optarg);
+			break;
+		case 'T':
+			bS = atoi(optarg);
+			break;
+		case 'W':
+			W = atoi(optarg);
+			break;
+		case 'i':
+			input = optarg;
+			break;
+		case 'o':
+			output = optarg;
+			break;
+		default:
+			print_usage();
+			return 0;
+		}
+	}
+
+	if(input == NULL){
+		printf("input file is not specified\n");
+		print_usage();
+		return 0;
+	}
+
+	char* p = input;
+	int flag = 0;
+	while(*p != '\0'){
+		if(*p == ','){
+			flag = 1;
+			break;
+		}
+		p++;
+	}
+	if(flag == 0){
+		printf("input file should like this: ref.fa,query.fa\n");
+		print_usage();
+		return 0;
+	}
+
 	L = block * bS;
 	W = (L + B - 1) / B;
-
-        if(block == 16)
-                printf("support:%s\n","SSE");
-        else if(block == 32)
-                printf("support:%s\n","AVX");
-        else
-                printf("support:%s\n","AVX512");
 	ms = MIN;
-
-	readseq(argv);
+	readseq(input);
 	pthread_mutex_init(&mutex, NULL);
 	unsigned int tsl;
 
@@ -626,7 +674,9 @@ int main(int argc, char* argv[])
 		}
 		while (lock != j) {}
 	}
-	trace();
+	FILE* fptr = fopen(output, "w");
+	trace(fptr);
+	fclose(fptr);
 	pthread_mutex_destroy(&mutex);
 	threadPoolDestory(pool);
 
