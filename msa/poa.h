@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include "../pthreadpool/pthreadpool.h"
 
-#define MIN -80
+#define MIN -120
 
 #if defined(__AVX512F__) && defined(__AVX512BW__) && defined(__AVX512DQ__)
 #include <immintrin.h>
@@ -27,7 +27,11 @@ typedef __m512i __mxxxi;
 #define mm_extract_epi8(a) _mm256_extract_epi8( _mm512_extracti32x8_epi32(a, 1),63%32)
 #define mm_add_epi8     _mm512_add_epi8
 #define mm_sub_epi8     _mm512_sub_epi8
+#define mm_adds_epi8     _mm512_adds_epi8
+#define mm_subs_epi8     _mm512_subs_epi8
+#define mm_subs_epu8	_mm512_subs_epu8
 #define mm_cmpeq_epi8   _mm512_cmpeq_epi8_mask
+#define mm_cmpgt_epi8   _mm512_cmpgt_epi8_mask
 #define mm_max_epi8     _mm512_max_epi8
 #define mm_setzero _mm512_setzero_si512
 #define mm_blendv_epi8(a,b,c)   _mm512_mask_mov_epi8(a,c,b)
@@ -50,7 +54,11 @@ typedef __m256i __mxxxi;
 #define mm_extract_epi8(a) _mm256_extract_epi8(a,31)
 #define mm_add_epi8     _mm256_add_epi8
 #define mm_sub_epi8     _mm256_sub_epi8
+#define mm_adds_epi8     _mm256_adds_epi8
+#define mm_subs_epi8     _mm256_subs_epi8
+#define mm_subs_epu8    _mm256_subs_epu8
 #define mm_cmpeq_epi8   _mm256_cmpeq_epi8
+#define mm_cmpgt_epi8   _mm256_cmpgt_epi8
 #define mm_max_epi8     _mm256_max_epi8
 #define mm_setzero _mm256_setzero_si256
 #define mm_blendv_epi8(a,b,c)   _mm256_blendv_epi8(a,b,c)
@@ -73,7 +81,11 @@ typedef __m128i __mxxxi;
 #define mm_extract_epi8(a) _mm_extract_epi8(a,15)
 #define mm_add_epi8     _mm_add_epi8
 #define mm_sub_epi8     _mm_sub_epi8
+#define mm_adds_epi8     _mm_adds_epi8
+#define mm_subs_epi8     _mm_subs_epi8
+#define mm_subs_epu8    _mm_subs_epu8
 #define mm_cmpeq_epi8   _mm_cmpeq_epi8
+#define mm_cmpgt_epi8   _mm_cmpgt_epi8
 #define mm_max_epi8     _mm_max_epi8
 #define mm_setzero _mm_setzero_si128
 #define mm_blendv_epi8(a,b,c)   _mm_blendv_epi8(a,b,c)

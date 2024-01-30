@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "poa.h"
-#include "pthreadpool.h"
+#include "../pthreadpool/pthreadpool.h"
 #include <unistd.h>
 #include <semaphore.h>
 #include <pthread.h>
