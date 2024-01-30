@@ -5,37 +5,37 @@
 #include <string.h>
 #include <unistd.h>
 
-// ÈÎÎñ½á¹¹Ìå
+// ä»»åŠ¡ç»“æž„ä½“
 typedef struct Task
 {
 	void (*function)(void* arg);
 	void* arg;
 }Task;
 
-// Ïß³Ì³Ø½á¹¹Ìå
+// çº¿ç¨‹æ± ç»“æž„ä½“
 struct ThreadPool
 {
-	// ÈÎÎñ¶ÓÁÐ
+	// ä»»åŠ¡é˜Ÿåˆ—
 	Task* taskQ;
-	int queueCapacity;	//ÈÝÁ¿
-	int queueSize;		//µ±Ç°ÈÎÎñ¸öÊý
-	int queueFront;		//¶ÓÍ· -> È¡Êý¾Ý
-	int queueRear;		//¶ÓÎ² -> ·ÅÊý¾Ý
+	int queueCapacity;	//å®¹é‡
+	int queueSize;		//å½“å‰ä»»åŠ¡ä¸ªæ•°
+	int queueFront;		//é˜Ÿå¤´ -> å–æ•°æ®
+	int queueRear;		//é˜Ÿå°¾ -> æ”¾æ•°æ®
 
 
-	pthread_t managerID;	//¹ÜÀíÕßÏß³ÌID
-	pthread_t* threadIDs;	//¹¤×÷µÄÏß³ÌID
-	int maxNum;				//×î´óÏß³ÌÊýÁ¿
-	pthread_mutex_t mutexPool;	//ËøÕû¸öÏß³Ì³Ø
-	pthread_cond_t notFull;		//ÈÎÎñ¶ÓÁÐÊÇ²»ÊÇÂúÁË
-	pthread_cond_t notEmpty;	//ÈÎÎñ¶ÓÁÐÊÇ²»ÊÇ¿ÕÁË
+	pthread_t managerID;	//ç®¡ç†è€…çº¿ç¨‹ID
+	pthread_t* threadIDs;	//å·¥ä½œçš„çº¿ç¨‹ID
+	int maxNum;				//æœ€å¤§çº¿ç¨‹æ•°é‡
+	pthread_mutex_t mutexPool;	//é”æ•´ä¸ªçº¿ç¨‹æ± 
+	pthread_cond_t notFull;		//ä»»åŠ¡é˜Ÿåˆ—æ˜¯ä¸æ˜¯æ»¡äº†
+	pthread_cond_t notEmpty;	//ä»»åŠ¡é˜Ÿåˆ—æ˜¯ä¸æ˜¯ç©ºäº†
 
-	int shutdown;	//ÊÇ·ñÏú»ÙÏß³Ì³Ø£¬Ïú»ÙÎª1£¬·ñÔòÎª0
+	int shutdown;	//æ˜¯å¦é”€æ¯çº¿ç¨‹æ± ï¼Œé”€æ¯ä¸º1ï¼Œå¦åˆ™ä¸º0
 };
 
 ThreadPool* threadPoolCreate(int max, int queueCapacity)
 {
-	//Ïß³Ì³Ø
+	//çº¿ç¨‹æ± 
 	ThreadPool* pool = (ThreadPool*)malloc(sizeof(ThreadPool));
 	do
 	{
@@ -61,7 +61,7 @@ ThreadPool* threadPoolCreate(int max, int queueCapacity)
 			break;
 		}
 
-		//ÈÎÎñ¶ÓÁÐ
+		//ä»»åŠ¡é˜Ÿåˆ—
 		pool->taskQ = (Task*)malloc(sizeof(Task) * queueCapacity);
 		pool->queueCapacity = queueCapacity;
 		pool->queueSize = 0;
@@ -70,7 +70,7 @@ ThreadPool* threadPoolCreate(int max, int queueCapacity)
 
 		pool->shutdown = 0;
 
-		//´´½¨Ïß³Ì
+		//åˆ›å»ºçº¿ç¨‹
 		for (int i = 0; i < max; ++i)
 		{
 			pthread_create(&pool->threadIDs[i], NULL, worker, pool);
@@ -78,7 +78,7 @@ ThreadPool* threadPoolCreate(int max, int queueCapacity)
 		return pool;
 	} while (0);
 
-	//×ÊÔ´ÊÍ·Å
+	//èµ„æºé‡Šæ”¾
 	if (pool && pool->threadIDs) free(pool->threadIDs);
 	if (pool && pool->taskQ) free(pool->taskQ);
 	if (pool) free(pool);
@@ -92,14 +92,14 @@ int threadPoolDestory(ThreadPool* pool)
 	{
 		return -1;
 	}
-	//¹Ø±ÕÏß³Ì³Ø
+	//å…³é—­çº¿ç¨‹æ± 
 	pool->shutdown = 1;
-	//»½ÐÑ×èÈûµÄÏû·ÑÕßÏß³Ì
+	//å”¤é†’é˜»å¡žçš„æ¶ˆè´¹è€…çº¿ç¨‹
 	for (int i = 0; i < pool->maxNum; ++i)
 	{
 		pthread_cond_signal(&pool->notEmpty);
 	}
-	//ÊÍ·Å¶ÑÄÚ´æ
+	//é‡Šæ”¾å †å†…å­˜
 	if (pool->taskQ)
 	{
 		free(pool->taskQ);
@@ -124,7 +124,7 @@ void threadPoolAdd(ThreadPool* pool, void(*func)(void*), void* arg)
 	pthread_mutex_lock(&pool->mutexPool);
 	while (pool->queueSize == pool->queueCapacity && !pool->shutdown)
 	{
-		//×èÈûÉú²úÕßÏß³Ì
+		//é˜»å¡žç”Ÿäº§è€…çº¿ç¨‹
 		pthread_cond_wait(&pool->notFull, &pool->mutexPool);
 	}
 	if (pool->shutdown)
@@ -132,7 +132,7 @@ void threadPoolAdd(ThreadPool* pool, void(*func)(void*), void* arg)
 		pthread_mutex_unlock(&pool->mutexPool);
 		return;
 	}
-	//Ìí¼ÓÈÎÎñ
+	//æ·»åŠ ä»»åŠ¡
 	pool->taskQ[pool->queueRear].function = func;
 	pool->taskQ[pool->queueRear].arg = arg;
 	pool->queueRear = (pool->queueRear + 1) % pool->queueCapacity;
@@ -149,28 +149,28 @@ void* worker(void* arg)
 	while (1)
 	{
 		pthread_mutex_lock(&pool->mutexPool);
-		//µ±Ç°ÈÎÎñ¶ÓÁÐÊÇ·ñÎª¿Õ
+		//å½“å‰ä»»åŠ¡é˜Ÿåˆ—æ˜¯å¦ä¸ºç©º
 		while (pool->queueSize == 0 && !pool->shutdown)
 		{
-			//×èÈû¹¤×÷Ïß³Ì
+			//é˜»å¡žå·¥ä½œçº¿ç¨‹
 			pthread_cond_wait(&pool->notEmpty, &pool->mutexPool);
 		}
 
-		//ÅÐ¶ÏÏß³Ì³ØÊÇ·ñ±»¹Ø±ÕÁË
+		//åˆ¤æ–­çº¿ç¨‹æ± æ˜¯å¦è¢«å…³é—­äº†
 		if (pool->shutdown)
 		{
 			pthread_mutex_unlock(&pool->mutexPool);
 			pthread_exit(NULL);
 		}
 
-		//´ÓÈÎÎñ¶ÓÁÐÖÐÈ¡³öÒ»¸öÈÎÎñ
+		//ä»Žä»»åŠ¡é˜Ÿåˆ—ä¸­å–å‡ºä¸€ä¸ªä»»åŠ¡
 		Task task;
 		task.function = pool->taskQ[pool->queueFront].function;
 		task.arg = pool->taskQ[pool->queueFront].arg;
-		//ÒÆ¶¯Í·½áµã
+		//ç§»åŠ¨å¤´ç»“ç‚¹
 		pool->queueFront = (pool->queueFront + 1) % pool->queueCapacity;
 		pool->queueSize--;
-		//½âËø
+		//è§£é”
 		pthread_cond_signal(&pool->notFull);
 		pthread_mutex_unlock(&pool->mutexPool);
 
