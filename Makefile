@@ -1,5 +1,5 @@
 CC = gcc
-OPTIMIZE_FLAGS = -O3
+OPTIMIZE_FLAGS = -O3 -g
 SIMD_FLAGS = -msse4.2 #optional:-march=native
 THREAD_FLAGS = -lpthread
 
@@ -11,8 +11,8 @@ all : TSTA_psa TSTA_psa_notrace TSTA_msa clean
 
 #Pairwise sequence alignment
 
-TSTA_psa : ${THREAD_SRC} psa.o pthreadpool.o
-	${CC} ${OPTIMIZE_FLAGS} -o $@ psa.o pthreadpool.o ${THREAD_FLAGS}
+TSTA_psa : ${THREAD_SRC} psa.o pthreadpool.o seqio.o
+	${CC} ${OPTIMIZE_FLAGS} -o $@ $^ -lz -lm ${THREAD_FLAGS}
 
 psa.o : psa/psa.c
 	${CC} ${OPTIMIZE_FLAGS} -c psa/psa.c -o $@ ${SIMD_FLAGS}
@@ -27,8 +27,8 @@ psa_notrace.o: psa/psa_notrace.c
 
 #Multiple sequence alignment
 
-TSTA_msa : ${THREAD_SRC} ${OTHER_SRC} msa.o c-t-simd.o topo.o result.o pthreadpool.o
-	${CC} ${OPTIMIZE_FLAGS} -o $@ msa.o c-t-simd.o topo.o result.o pthreadpool.o ${THREAD_FLAGS}
+TSTA_msa : ${THREAD_SRC} ${OTHER_SRC} msa.o c-t-simd.o topo.o result.o pthreadpool.o seqio.o
+	${CC} ${OPTIMIZE_FLAGS} -o $@ msa.o c-t-simd.o topo.o result.o pthreadpool.o seqio.o -lz -lm ${THREAD_FLAGS}
 
 msa.o : msa/msa.c ${OTHER_SRC}
 	${CC} ${OPTIMIZE_FLAGS} -c msa/msa.c -o $@ ${SIMD_FLAGS}
@@ -46,6 +46,9 @@ result.o : msa/result.c ${OTHER_SRC}
 
 pthreadpool.o : ${THREAD_SITE}/pthreadpool.c
 	${CC} ${OPTIMIZE_FLAGS} -c ${THREAD_SITE}/pthreadpool.c -o $@ ${THREAD_FLAGS}
+
+seqio.o: seqio.c
+	${CC} ${OPTIMIZE_FLAGS} -c seqio.c -lz -lm -o $@
 
 #clean
 clean:

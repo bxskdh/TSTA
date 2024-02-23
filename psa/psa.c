@@ -1,12 +1,12 @@
 ﻿#include <stdio.h>
 #include <stdlib.h>
 #include "../pthreadpool/pthreadpool.h"
+#include "seqio.h"
 #include <pthread.h>
 #include <string.h>
 #include <unistd.h>
 #include <malloc.h>
 #include <stdint.h>
-
 #if defined(__AVX512F__) && defined(__AVX512BW__) && defined(__AVX512DQ__)
 #include <immintrin.h>
 #elif __AVX2__
@@ -176,79 +176,37 @@ static inline void aligned_free(void *buffer, int base){
 	free(p);
 }
 
-static inline void readseq(char* input)
+static inline void readseq(char* input1, char* input2)
 {
-	char* p = strtok(input, ",");
-	char* q = strtok(NULL, ",");
-	FILE* fptr1 = fopen(p, "r");
-	FILE* fptr2 = fopen(q, "r");
-	int a, b;
-	int offset[3];
-	if (fgetc(fptr1) == '>')
-	{
-		fseek(fptr1, 0, 0);
-		offset[0] = offset[1] = 0;
-		while (fgetc(fptr1) != '\n')
-			offset[0]++;
-		offset[0] += 1;
-		fseek(fptr1, 0, SEEK_END);
-		a = ftell(fptr1) - offset[0] - 1;
-		while (fgetc(fptr2) != '\n')
-			offset[1]++;
-		offset[1] += 1;
-		fseek(fptr2, 0, SEEK_END);
-		b = ftell(fptr2) - offset[1] - 1;
-		if (a < b)
-		{
-			FILE* fptr3 = fptr2;
-			fptr2 = fptr1;
-			fptr1 = fptr3;
-			int c = b;
-			b = a;
-			a = c;
-			offset[2] = offset[0];
-			offset[0] = offset[1];
-			offset[1] = offset[2];
-		}
-	}
-	else
-	{
-		fseek(fptr1, 0, SEEK_END);
-		a = ftell(fptr1);
-		fseek(fptr2, 0, SEEK_END);
-		b = ftell(fptr2);
-		if (a < b)
-		{
-			FILE* fptr3 = fptr2;
-			fptr2 = fptr1;
-			fptr1 = fptr3;
-			int c = b;
-			b = a;
-			a = c;
-		}
-		offset[0] = offset[1] = 0;
-	}
-	fseek(fptr1, offset[0], 0);
-	fseek(fptr2, offset[1], 0);
-	length[0] = length[2] = a;
-	length[1] = length[3] = b;
-	if (a % L != 0)
-		length[0] = a + (L - a % L);
-	if (b % L != 0)
-		length[1] = b + (L - b % L);
+	seqioFastaRecord* seq1 = NULL;
+	seqioFastaRecord* seq2 = NULL;
+	seqioOpenOptions opts1 = {
+		.filename = input1,
+	};
+	seqioOpenOptions opts2 = {
+		.filename = input2,
+	};
+	seqioFile* file1 = seqioOpen(&opts1);
+	seqioFile* file2 = seqioOpen(&opts2);
+	seq1 = seqioReadFasta(file1, seq1);
+	seq2 = seqioReadFasta(file2, seq2);
+	length[0] = length[2] = seq1->sequence->length;
+	length[1] = length[3] = seq2->sequence->length;
+	if (seq1->sequence->length % L != 0)
+		length[0] = seq1->sequence->length + (L - seq1->sequence->length % L);
+	if (seq2->sequence->length % L != 0)
+		length[1] = seq2->sequence->length + (L - seq2->sequence->length % L);
 	seq = (char**)malloc(2 * sizeof(char**));
 	seq[0] = (char*)malloc((length[0] + 1) * sizeof(char));
 	seq[1] = (char*)malloc((length[3] + 1) * sizeof(char));
-
-	memset(seq[0], 'N', (size_t)length[0] + 1);
+	memcpy(seq[0], seq1->sequence->data, seq1->sequence->length);
 	seq[0][length[0]] = '\0';
-	fgets(seq[0], a + 1, fptr1);	
-
+	memcpy(seq[1], seq2->sequence->data, seq2->sequence->length);
 	seq[1][length[3]] = '\0';
-	fgets(seq[1], b + 1, fptr2);
-
-	fclose(fptr1);
-	fclose(fptr2);
+	seqioFreeRecord(seq1);
+	seqioFreeRecord(seq2);
+	seqioClose(file1);
+	seqioClose(file2);
 }
 
 static inline void blockmatrix_init()
@@ -497,8 +455,8 @@ static inline void trace(FILE* fptr)
 	if(i >= 0)
 		n = n + i + 1;
 	n = length[2] + n;
-	char* a = (char*)malloc(n * sizeof(char));
-	char* b = (char*)malloc(n * sizeof(char));
+	char* a = (char*)malloc((n + 1) * sizeof(char));
+	char* b = (char*)malloc((n + 1) * sizeof(char));
 	a[n] = b[n] = '\0';
 	i = length[3] - 1;
 	j = length[2] - 1;
@@ -556,7 +514,8 @@ print_usage(){
     printf("-O                      the sorce of open-gap [default: -4]\n");
     printf("-T                      the number of threads [default: 10]\n");
     printf("-W                      the width of block(Multiplication of simd data width) [default: 16]\n");
-    printf("-i                      the input sequence(fasta)\n");
+    printf("-1                      the input sequence1(fasta)\n");
+	printf("-2                      the input sequence2(fasta)\n");
 	printf("-o                      the output file [default: output.txt]\n");
     printf("example:\n./TSTA_psa -i seq1.fa,seq2.fa -o output.txt\n");
 }
@@ -564,10 +523,11 @@ print_usage(){
 int main(int argc, char* argv[])
 {
     int c;
-	char* input = NULL;
+	char* input1 = NULL;
+	char* input2 = NULL;
 	char* output = "output.txt";
 	int T = 10;
-	while ((c = getopt(argc, argv, "M:X:E:O:T:W:i:o:")) != -1)
+	while ((c = getopt(argc, argv, "M:X:E:O:T:W:1:2:o:")) != -1)
 	{
 		switch (c)
 		{
@@ -589,8 +549,11 @@ int main(int argc, char* argv[])
 		case 'W':
 			bS = atoi(optarg);
 			break;
-		case 'i':
-			input = optarg;
+		case '1':
+			input1 = optarg;
+			break;
+		case '2':
+			input2 = optarg;
 			break;
 		case 'o':
 			output = optarg;
@@ -601,31 +564,15 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	if(input == NULL){
+	if(input1 == NULL || input2 == NULL){
 		printf("input file is not specified\n");
 		print_usage();
 		return 0;
 	}
-
-	char* p = input;
-	int flag = 0;
-	while(*p != '\0'){
-		if(*p == ','){
-			flag = 1;
-			break;
-		}
-		p++;
-	}
-	if(flag == 0){
-		printf("input file should like this: ref.fa,query.fa\n");
-		print_usage();
-		return 0;
-	}
-
 	L = block * bS;
 	W = (L + B - 1) / B;
 	ms = MIN;
-	readseq(input);
+	readseq(input1, input2);
 	pthread_mutex_init(&mutex, NULL);
 	unsigned int tsl;
 	tsl = (length[0] + length[1]) / L - 1;
