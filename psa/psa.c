@@ -180,6 +180,7 @@ static inline void readseq(char* input1, char* input2)
 {
 	seqioFastaRecord* seq1 = NULL;
 	seqioFastaRecord* seq2 = NULL;
+	seqioFastaRecord* temp = NULL;
 	seqioOpenOptions opts1 = {
 		.filename = input1,
 	};
@@ -190,6 +191,12 @@ static inline void readseq(char* input1, char* input2)
 	seqioFile* file2 = seqioOpen(&opts2);
 	seq1 = seqioReadFasta(file1, seq1);
 	seq2 = seqioReadFasta(file2, seq2);
+	if(seq2->sequence->length > seq1->sequence->length)
+	{
+		temp = seq1;
+		seq1 = seq2;
+		seq2 = temp;
+	}
 	length[0] = length[2] = seq1->sequence->length;
 	length[1] = length[3] = seq2->sequence->length;
 	if (seq1->sequence->length % L != 0)
@@ -422,7 +429,7 @@ static inline void block_alignment(void* p)
 		mm_free(source[i]);
 	free(source);
 }
-
+#ifdef TRACE
 static inline void trace(FILE* fptr)
 {
 	int i, j;
@@ -505,6 +512,7 @@ static inline void trace(FILE* fptr)
 	fputs("\n>2\n", fptr);
 	fputs(b, fptr);
 }
+#endif
 
 static inline void
 print_usage(){
@@ -516,8 +524,12 @@ print_usage(){
     printf("-W                      the width of block(Multiplication of simd data width) [default: 16]\n");
     printf("-1                      the input sequence1(fasta)\n");
 	printf("-2                      the input sequence2(fasta)\n");
-	printf("-o                      the output file [default: output.txt]\n");
-    printf("example:\n./TSTA_psa -i seq1.fa,seq2.fa -o output.txt\n");
+#ifdef TRACE
+    printf("-o                      the output file [default: output.txt]\n");
+    printf("example:\n./TSTA_psa -1 seq1.fa -2 seq2.fa -o output.txt\n");
+#else
+	printf("example:\n./TSTA_psa -1 seq1.fa -2 seq2.fa\n");
+#endif
 }
 
 int main(int argc, char* argv[])
@@ -586,6 +598,7 @@ int main(int argc, char* argv[])
 	V = (char*)malloc(length[3] * sizeof(char));//↓ v-difference-sorce
 	F = (char*)malloc(length[3] * sizeof(char));//-> f-difference-sorce
 	int s;
+#ifdef TRACE
 	back = (char**)malloc(length[3] * sizeof(char*));
 	for (int i = 0; i < length[3]; i++)
 		back[i] = (char*)mm_malloc(length[0] * sizeof(char));
@@ -595,6 +608,7 @@ int main(int argc, char* argv[])
 	fback = (char**)malloc(length[3] * sizeof(char*));
 	for (int i = 0; i < length[3]; i++)
 		fback[i] = (char*)mm_malloc(length[0] * sizeof(char));
+#endif
 	int maxpthread = T;
 	ThreadPool* pool = threadPoolCreate(maxpthread, 100);
 	blockmatrix_init();
@@ -619,9 +633,11 @@ int main(int argc, char* argv[])
 		}
 		while (lock != j) {}
 	}
+#ifdef TRACE
 	FILE* fptr = fopen(output, "w");
 	trace(fptr);
 	fclose(fptr);
+#endif
 	pthread_mutex_destroy(&mutex);
 	threadPoolDestory(pool);
 	for (int i = 0; i < 2; i++)
@@ -632,6 +648,7 @@ int main(int argc, char* argv[])
 	free(real);
 	free(F);
 	free(V);
+#ifdef TRACE
 	for (int i = 0; i < length[3]; i++)
 	{
 		mm_free(back[i]);
@@ -641,6 +658,7 @@ int main(int argc, char* argv[])
 	free(back); 
 	free(eback); 
 	free(fback);
+#endif
 	printf("maxsorce=%d\n", ms);
 	return 0;
 }
