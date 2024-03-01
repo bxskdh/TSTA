@@ -12,18 +12,18 @@ all : TSTA_psa TSTA_psa_notrace TSTA_msa clean
 #Pairwise sequence alignment
 
 TSTA_psa : ${THREAD_SRC} psa.o pthreadpool.o seqio.o
+	${CC} ${OPTIMIZE_FLAGS} -o $@ $^ -DTRACE -lz -lm ${THREAD_FLAGS}
+
+TSTA_psa_notrace : ${THREAD_SRC} psa-notrace.o pthreadpool.o seqio.o
 	${CC} ${OPTIMIZE_FLAGS} -o $@ $^ -lz -lm ${THREAD_FLAGS}
 
-psa.o : psa/psa.c
+psa-notrace.o : psa/psa.c
 	${CC} ${OPTIMIZE_FLAGS} -c psa/psa.c -o $@ ${SIMD_FLAGS}
 
+psa.o : psa/psa.c
+	${CC} ${OPTIMIZE_FLAGS} -c psa/psa.c -o $@ ${SIMD_FLAGS} -DTRACE
+
 #psa-notrace
-
-TSTA_psa_notrace : ${THREAD_SRC} psa_notrace.o pthreadpool.o
-	${CC} ${OPTIMIZE_FLAGS} -o $@ psa_notrace.o pthreadpool.o ${THREAD_FLAGS}
-
-psa_notrace.o: psa/psa_notrace.c
-	${CC} ${OPTIMIZE_FLAGS} -c psa/psa_notrace.c -o $@ ${SIMD_FLAGS}
 
 #Multiple sequence alignment
 
