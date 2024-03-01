@@ -13,12 +13,12 @@ make
 ## Usage and run
 ### Pairwise sequence alignment
 ```bash
-./TSTA_psa -i ./example/psa/seq/seqa1.fa,./example/psa/seq/seqb1.fa
+./TSTA_psa -1 ./example/psa/seq/seqa1.fa -2 ./example/psa/seq/seqb1.fa
 # maxsorce=-5
 ```
 ### no-backtracing PSA
 ```bash
-./TSTA_psa_notrace -i ./example/psa/seq/seqa1.fa,./example/psa/seq/seqb1.fa
+./TSTA_psa_notrace -1 ./example/psa/seq/seqa1.fa -2 ./example/psa/seq/seqb1.fa
 # maxsorce=-5
 ```
 ### Multiple sequence alignment
