@@ -457,9 +457,6 @@ readUntil(seqioFile* sf, seqioString* s, char untilChar, readStatus nextStatus)
     sf->buffer.left -= sep + 1;
     sf->buffer.offset += sep + 1;
     seqioStringAppend(s, buff, sep);
-    if (sf->buffer.left == 0) {
-      continue;
-    }
   }
 }
 
@@ -489,9 +486,6 @@ seqioReadFasta(seqioFile* sf, seqioFastaRecord* record)
   readStatus status = sf->pravite.state;
   int c;
   while (1) {
-    if (status == READ_STATUS_SEQUENCE) {
-      break;
-    }
     size_t readSize = readDataToBuffer(sf);
     if (readSize == 0) {
       break;
