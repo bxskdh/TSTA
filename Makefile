@@ -1,6 +1,7 @@
 CC = gcc
 OPTIMIZE_FLAGS = -O3 -g
-SIMD_FLAGS = -msse4.2 #optional:-march=native
+INCLUDE_DIR = -I.
+SIMD_FLAGS = -msse4.2 ${INCLUDE_DIR} #optional:-march=native
 THREAD_FLAGS = -lpthread
 
 THREAD_SITE = pthreadpool
