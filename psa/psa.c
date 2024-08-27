@@ -523,7 +523,7 @@ print_usage(){
     printf("-T                      the number of threads [default: 10]\n");
     printf("-W                      the width of block(Multiplication of simd data width) [default: 16]\n");
     printf("-1                      the input sequence1(fasta)\n");
-	printf("-2                      the input sequence2(fasta)\n");
+    printf("-2                      the input sequence2(fasta)\n");
 #ifdef TRACE
     printf("-o                      the output file [default: output.txt]\n");
     printf("example:\n./TSTA_psa -1 seq1.fa -2 seq2.fa -o output.txt\n");
