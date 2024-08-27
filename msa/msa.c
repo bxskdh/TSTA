@@ -67,7 +67,7 @@ static inline void print_usage()
 	printf("-W                      the width of block(Multiplication of simd data width) [default: 16]\n");
 	printf("-i                      the input sequence(MSA/fastq)\n");
 	printf("-o                      the output file [default: output.txt]\n");
-	printf("example:\n./TSTA_msa -i seq.fa -f output.txt\n");
+	printf("example:\n./TSTA_msa -i seq.fa -o output.txt\n");
 }
 
 int main(int argc,char* argv[])
@@ -76,7 +76,7 @@ int main(int argc,char* argv[])
 	char* input = NULL;
 	int T = 10;
 	char* output = "output.txt";
-	while((c = getopt(argc,argv,"M:X:E:O:T:W:i:f:")) != -1)
+	while((c = getopt(argc,argv,"M:X:E:O:T:W:i:o:")) != -1)
 	{
 		switch(c)
 		{
