@@ -65,7 +65,7 @@ static inline void print_usage()
 	printf("-O                      the sorce of open-gap [default: -4]\n");
 	printf("-T                      the number of threads [default: 10]\n");
 	printf("-W                      the width of block(Multiplication of simd data width) [default: 16]\n");
-	printf("-i                      the input sequence(MSA/fastq)\n");
+	printf("-i                      the input sequence(fasta format)\n");
 	printf("-o                      the output file [default: output.txt]\n");
 	printf("example:\n./TSTA_msa -i seq.fa -o output.txt\n");
 }
