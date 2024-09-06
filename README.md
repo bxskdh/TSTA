@@ -37,6 +37,11 @@ make
 # poa_len=10130 ,seq_len=5000 ,trace_sub:[num1]=10129 [num2]=4999 ,lastsorce=-870
 # poa_add_len:1338
 ```
+
+> [!Tip]
+> While you are running the program in msa mode, we recommend that the sequences used for alignment should be less than 200,000bp and more than 50,000bp. If the sequences are too long, the program may run out of memory.
+
+
 ## Operating system
 The Linux platform is supported by TSTA.It run and tested on CentOS Linux 7.
 ## Contact

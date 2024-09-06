@@ -41,15 +41,15 @@ char* readseq(char* A, int poal)
 	length2 = poal;
 	if (a % L != 0)
 		length1 = a + (L - a % L);
-	printf("seq:%d, seqN:%d, poa:%d\n", a, length1, length2);
 	seq1 = (char*)malloc(((size_t)length1 + 1) * sizeof(char));
-	seq2 = (char*)mm_malloc((size_t)length1 * sizeof(char));
+	seq2 = (char*)mm_malloc((size_t)(length1+1) * sizeof(char));
 	memset(seq1, 'N', (size_t)length1 + 1);
 	memcpy(seq1, A, a);
 	seq1[length1] = '\0';
 	for (int i = 0; i < length1; i++)
 		seq2[i] = seq1[i / L * L + ((i % L) % B) * W + ((i % L) / B)];
 	free(seq1);
+	seq2[length1] = '\0';
 	return seq2;
 }
 
@@ -748,7 +748,6 @@ topo* node_fuse(topo* n, char b[], int num, int sum, int last)
 		if (s2 >= n->last_node_num)
 			break;
 	}
-	printf("poa_len=%d ,seq_len=%d ,trace_sub:[num1]=%d [num2]=%d ,lastsorce=%d\n", n1->len, len_b, num1, num2 ,s1);/////
 	while (num1 != -1 && num2 != -1)
 	{
 		if (n1->sort[num1]->source[NUM2(num2)] / 42 == 3)
@@ -971,7 +970,6 @@ topo* node_fuse(topo* n, char b[], int num, int sum, int last)
 		l++;
 		num2--;
 	}
-	printf("poa_add_len:%d\n", l);/////////
 	n->len = n->len + l;
 	n->unsort = (poa**)realloc(n->unsort, n->len * sizeof(poa*));
 	n->sort = (poa**)realloc(n->sort, n->len * sizeof(poa*));
