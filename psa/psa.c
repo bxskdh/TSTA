@@ -355,10 +355,11 @@ static inline void row(int* maxsorce, int y, int block_i, int block_l, int pc1, 
 	F[pc2] = mm_extract_epi8(f);
 	V[pc2] = mm_extract_epi8(v);
 	maxsorce[y] = mm_reduce_max_epi32(b2);
-        
+#ifdef TRACE
 	memcpy(back[pc2] + pc4, source[0], L);
         memcpy(fback[pc2] + pc4, source[1], L);
         memcpy(eback[pc2] + pc4, source[2], L);
+#endif
 }
 
 static inline void block_alignment(void* p)
@@ -424,6 +425,7 @@ static inline void block_alignment(void* p)
 	
 	mm_free(t_temp);mm_free(e_temp);mm_free(r_temp);mm_free(q_temp);
 	mm_free(h_s); mm_free(rf);
+	mm_free(c_temp);
 	free(maxsorce);
 	for(int i = 0;i < 3;i++)
 		mm_free(source[i]);
@@ -511,6 +513,8 @@ static inline void trace(FILE* fptr)
 	fputs(a, fptr);
 	fputs("\n>2\n", fptr);
 	fputs(b, fptr);
+	free(a);
+	free(b);
 }
 #endif
 

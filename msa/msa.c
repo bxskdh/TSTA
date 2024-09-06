@@ -38,11 +38,13 @@ static inline void readseq(seq_s* seq, char* path) {
 	seqioOpenOptions opts = {
 		.filename = path,
 	};
+	seq->seq_num = 0;
 	seqioFile *file = seqioOpen(&opts);
 	while ((fastaSeq = seqioReadFasta(file, fastaSeq)) != NULL) {
 		seq->seq_num++;
 	}
 	seqioClose(file);
+	fprintf(stderr, "seq_num: %d\n", seq->seq_num);
 	file = seqioOpen(&opts);
 	seq->S = (char**)malloc(seq->seq_num * sizeof(char*));
 	int i = 0;
@@ -129,7 +131,12 @@ int main(int argc,char* argv[])
 	{
 		s = control(s, seq->S[i], i, seq->seq_num, pool);
 		s = t_sort(s, 0);
+		// printf a precessBar
+		if(i % 100 == 0)
+		printf("\r[%d/%d]", i, seq->seq_num);
 	}
+	printf("\r[%d/%d]", seq->seq_num, seq->seq_num);
+	printf("\n");
 	s = control(s, seq->S[seq->seq_num - 1], seq->seq_num-1, seq->seq_num, pool);
 	s = t_sort(s, 1);
 	FILE* res = fopen(output, "w");
