@@ -212,7 +212,6 @@ seqioOpen(seqioOpenOptions* options)
   if (options->isGzipped) {
     sf->file = gzopen(options->filename, getOpenModeStr(options));
     if (sf->file == NULL) {
-      fclose(sf->file);
       seqioFree(sf);
       return NULL;
     }
@@ -222,7 +221,6 @@ seqioOpen(seqioOpenOptions* options)
 #else
   sf->file = fopen(options->filename, getOpenModeStr(options));
   if (sf->file == NULL) {
-    fclose(sf->file);
     seqioFree(sf);
     return NULL;
   }
@@ -354,7 +352,7 @@ seqioStringClear(seqioString* string)
 static inline void
 seqioStringAppend(seqioString* string, char* data, size_t length)
 {
-  if (string->length + length > string->capacity) {
+  if (string->length + length + 1 > string->capacity) {
     size_t newCapacity = string->length + length + 1;
     kroundup32(newCapacity);
     string->capacity = newCapacity;
@@ -371,7 +369,7 @@ seqioStringAppend(seqioString* string, char* data, size_t length)
 static inline void
 seqioStringAppendChar(seqioString* string, char c)
 {
-  if (string->length + 1 > string->capacity) {
+  if (string->length + 1 + 1 > string->capacity) {
     size_t newCapacity = string->length + 1 + 1;
     kroundup32(newCapacity);
     string->capacity = newCapacity;
