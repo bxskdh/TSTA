@@ -40,17 +40,33 @@ static inline void readseq(seq_s* seq, char* path) {
 	};
 	seq->seq_num = 0;
 	seqioFile *file = seqioOpen(&opts);
+	if (file == NULL) {
+		fprintf(stderr, "Failed to open input file %s.\n", path);
+		exit(1);
+	}
 	while ((fastaSeq = seqioReadFasta(file, fastaSeq)) != NULL) {
 		seq->seq_num++;
 	}
 	seqioClose(file);
 	fprintf(stderr, "seq_num: %d\n", seq->seq_num);
 	file = seqioOpen(&opts);
+	if (file == NULL) {
+		fprintf(stderr, "Failed to open input file %s.\n", path);
+		exit(1);
+	}
 	seq->S = (char**)malloc(seq->seq_num * sizeof(char*));
+	if (seq->S == NULL) {
+		fprintf(stderr, "Failed to allocate memory.\n");
+		exit(1);
+	}
 	int i = 0;
 	while((fastaSeq = seqioReadFasta(file, fastaSeq)) != NULL) {
 		size_t len = fastaSeq->sequence->length;
 		seq->S[i] = (char*)malloc((len + 1) * sizeof(char));
+		if (seq->S[i] == NULL) {
+			fprintf(stderr, "Failed to allocate memory.\n");
+			exit(1);
+		}
 		memcpy(seq->S[i], fastaSeq->sequence->data, len);
 		seq->S[i][len] = '\0';
 		i++;
@@ -124,6 +140,11 @@ int main(int argc,char* argv[])
 	readseq(seq, input);
 	int maxpthread = T;
 	ThreadPool* pool = threadPoolCreate(maxpthread, 100);
+	if (pool == NULL)
+	{
+		fprintf(stderr, "Failed to create thread pool.\n");
+		return 1;
+	}
 	topo* s = (topo*)malloc(sizeof(topo));
 	poa* p = poa_build_init(s, seq->S[0], seq->seq_num);
 	s->p = p;
@@ -140,6 +161,11 @@ int main(int argc,char* argv[])
 	s = control(s, seq->S[seq->seq_num - 1], seq->seq_num-1, seq->seq_num, pool);
 	s = t_sort(s, 1);
 	FILE* res = fopen(output, "w");
+	if (res == NULL)
+	{
+		fprintf(stderr, "Failed to open output file %s.\n", output);
+		return 1;
+	}
 	printf_result(s, seq->seq_num, res);
 	fclose(res);
 	threadPoolDestory(pool);

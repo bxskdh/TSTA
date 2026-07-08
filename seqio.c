@@ -85,12 +85,25 @@ readDataToBuffer(seqioFile* sf)
   size_t needReadSize = sf->buffer.capacity - sf->buffer.left;
 #ifdef enable_gzip
   if (sf->options->isGzipped) {
-    readSize = gzread(sf->file, sf->buffer.data, needReadSize);
+    int gzReadSize = gzread(sf->file, sf->buffer.data, needReadSize);
+    if (gzReadSize < 0) {
+      fprintf(stderr, "Failed to read from file %s.\n", sf->options->filename);
+      exit(1);
+    }
+    readSize = (size_t)gzReadSize;
   } else {
     readSize = fread(sf->buffer.data, 1, needReadSize, sf->file);
+    if (ferror(sf->file)) {
+      fprintf(stderr, "Failed to read from file %s.\n", sf->options->filename);
+      exit(1);
+    }
   }
 #else
   readSize = fread(sf->buffer.data, 1, needReadSize, sf->file);
+  if (ferror(sf->file)) {
+    fprintf(stderr, "Failed to read from file %s.\n", sf->options->filename);
+    exit(1);
+  }
 #endif
   if (readSize < needReadSize) {
     sf->pravite.isEOF = true;
@@ -109,12 +122,27 @@ freshDataToFile(seqioFile* sf)
   }
 #ifdef enable_gzip
   if (sf->options->isGzipped) {
-    gzwrite(sf->file, sf->buffer.data + sf->buffer.offset, sf->buffer.left);
+    int written = gzwrite(sf->file, sf->buffer.data + sf->buffer.offset,
+                          sf->buffer.left);
+    if (written <= 0 || (size_t)written != sf->buffer.left) {
+      fprintf(stderr, "Failed to write to file %s.\n", sf->options->filename);
+      exit(1);
+    }
   } else {
-    fwrite(sf->buffer.data + sf->buffer.offset, 1, sf->buffer.left, sf->file);
+    size_t written =
+      fwrite(sf->buffer.data + sf->buffer.offset, 1, sf->buffer.left, sf->file);
+    if (written != sf->buffer.left) {
+      fprintf(stderr, "Failed to write to file %s.\n", sf->options->filename);
+      exit(1);
+    }
   }
 #else
-  fwrite(sf->buffer.data + sf->buffer.offset, 1, sf->buffer.left, sf->file);
+  size_t written =
+    fwrite(sf->buffer.data + sf->buffer.offset, 1, sf->buffer.left, sf->file);
+  if (written != sf->buffer.left) {
+    fprintf(stderr, "Failed to write to file %s.\n", sf->options->filename);
+    exit(1);
+  }
 #endif
   sf->buffer.offset = 0;
   sf->buffer.left = 0;
@@ -201,9 +229,9 @@ seqioOpen(seqioOpenOptions* options)
       return NULL;
     }
     unsigned char magic[2] = { 0 };
-    fread(magic, 1, 2, fp);
+    size_t magicRead = fread(magic, 1, 2, fp);
     fclose(fp);
-    if (magic[0] == 0x1f && magic[1] == 0x8b) {
+    if (magicRead == 2 && magic[0] == 0x1f && magic[1] == 0x8b) {
       options->isGzipped = true;
     } else {
       options->isGzipped = false;
@@ -212,24 +240,34 @@ seqioOpen(seqioOpenOptions* options)
   if (options->isGzipped) {
     sf->file = gzopen(options->filename, getOpenModeStr(options));
     if (sf->file == NULL) {
-      fclose(sf->file);
       seqioFree(sf);
       return NULL;
     }
   } else {
     sf->file = fopen(options->filename, getOpenModeStr(options));
+    if (sf->file == NULL) {
+      seqioFree(sf);
+      return NULL;
+    }
   }
 #else
   sf->file = fopen(options->filename, getOpenModeStr(options));
   if (sf->file == NULL) {
-    fclose(sf->file);
     seqioFree(sf);
     return NULL;
   }
 #endif
   sf->buffer.data = (char*)seqioMalloc(seqioDefaultBufferSize);
   if (sf->buffer.data == NULL) {
+#ifdef enable_gzip
+    if (options->isGzipped) {
+      gzclose(sf->file);
+    } else {
+      fclose(sf->file);
+    }
+#else
     fclose(sf->file);
+#endif
     seqioFree(sf);
     return NULL;
   }
@@ -360,7 +398,8 @@ seqioStringAppend(seqioString* string, char* data, size_t length)
     string->capacity = newCapacity;
     string->data = (char*)seqioRealloc(string->data, newCapacity);
     if (string->data == NULL) {
-      return;
+      fprintf(stderr, "Failed to allocate memory.\n");
+      exit(1);
     }
   }
   memcpy(string->data + string->length, data, length);
@@ -377,7 +416,8 @@ seqioStringAppendChar(seqioString* string, char c)
     string->capacity = newCapacity;
     string->data = (char*)seqioRealloc(string->data, newCapacity);
     if (string->data == NULL) {
-      return;
+      fprintf(stderr, "Failed to allocate memory.\n");
+      exit(1);
     }
   }
   string->data[string->length] = c;
