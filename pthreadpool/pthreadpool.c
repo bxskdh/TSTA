@@ -63,6 +63,11 @@ ThreadPool* threadPoolCreate(int max, int queueCapacity)
 
 		//任务队列
 		pool->taskQ = (Task*)malloc(sizeof(Task) * queueCapacity);
+		if (pool->taskQ == NULL)
+		{
+			printf("malloc taskQ fail.\n");
+			break;
+		}
 		pool->queueCapacity = queueCapacity;
 		pool->queueSize = 0;
 		pool->queueFront = 0;
@@ -71,16 +76,39 @@ ThreadPool* threadPoolCreate(int max, int queueCapacity)
 		pool->shutdown = 0;
 
 		//创建线程
+		int created = 0;
+		int createFail = 0;
 		for (int i = 0; i < max; ++i)
 		{
-			pthread_create(&pool->threadIDs[i], NULL, worker, pool);
+			if (pthread_create(&pool->threadIDs[i], NULL, worker, pool) != 0)
+			{
+				printf("pthread_create fail.\n");
+				createFail = 1;
+				break;
+			}
+			created++;
+		}
+		if (createFail)
+		{
+			//唤醒已创建的线程并等待其退出，避免释放后被访问
+			pool->shutdown = 1;
+			for (int i = 0; i < created; ++i)
+				pthread_cond_signal(&pool->notEmpty);
+			for (int i = 0; i < created; ++i)
+				pthread_join(pool->threadIDs[i], NULL);
+			pthread_mutex_destroy(&pool->mutexPool);
+			pthread_cond_destroy(&pool->notEmpty);
+			pthread_cond_destroy(&pool->notFull);
+			free(pool->taskQ);
+			free(pool->threadIDs);
+			free(pool);
+			return NULL;
 		}
 		return pool;
 	} while (0);
 
 	//资源释放
 	if (pool && pool->threadIDs) free(pool->threadIDs);
-	if (pool && pool->taskQ) free(pool->taskQ);
 	if (pool) free(pool);
 
 	return NULL;

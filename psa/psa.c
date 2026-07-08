@@ -189,8 +189,18 @@ static inline void readseq(char* input1, char* input2)
 	};
 	seqioFile* file1 = seqioOpen(&opts1);
 	seqioFile* file2 = seqioOpen(&opts2);
+	if (file1 == NULL || file2 == NULL)
+	{
+		fprintf(stderr, "Failed to open input file(s).\n");
+		exit(1);
+	}
 	seq1 = seqioReadFasta(file1, seq1);
 	seq2 = seqioReadFasta(file2, seq2);
+	if (seq1 == NULL || seq2 == NULL)
+	{
+		fprintf(stderr, "Failed to read a fasta record from input file(s).\n");
+		exit(1);
+	}
 	if(seq2->sequence->length > seq1->sequence->length)
 	{
 		temp = seq1;
@@ -204,8 +214,18 @@ static inline void readseq(char* input1, char* input2)
 	if (seq2->sequence->length % L != 0)
 		length[1] = seq2->sequence->length + (L - seq2->sequence->length % L);
 	seq = (char**)malloc(2 * sizeof(char**));
+	if (seq == NULL)
+	{
+		fprintf(stderr, "Failed to allocate memory.\n");
+		exit(1);
+	}
 	seq[0] = (char*)malloc((length[0] + 1) * sizeof(char));
 	seq[1] = (char*)malloc((length[3] + 1) * sizeof(char));
+	if (seq[0] == NULL || seq[1] == NULL)
+	{
+		fprintf(stderr, "Failed to allocate memory.\n");
+		exit(1);
+	}
 	memcpy(seq[0], seq1->sequence->data, seq1->sequence->length);
 	seq[0][length[0]] = '\0';
 	memcpy(seq[1], seq2->sequence->data, seq2->sequence->length);
@@ -615,6 +635,11 @@ int main(int argc, char* argv[])
 #endif
 	int maxpthread = T;
 	ThreadPool* pool = threadPoolCreate(maxpthread, 100);
+	if (pool == NULL)
+	{
+		fprintf(stderr, "Failed to create thread pool.\n");
+		return 1;
+	}
 	blockmatrix_init();
 	int j = 0;
 	for (int i = 0; i < tsl; i++)
@@ -639,6 +664,11 @@ int main(int argc, char* argv[])
 	}
 #ifdef TRACE
 	FILE* fptr = fopen(output, "w");
+	if (fptr == NULL)
+	{
+		fprintf(stderr, "Failed to open output file %s.\n", output);
+		return 1;
+	}
 	trace(fptr);
 	fclose(fptr);
 #endif
