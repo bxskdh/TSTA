@@ -3,3 +3,13 @@ TSTA_*
 *.o
 *.a
 */**.txt
+
+# unit test / coverage artifacts
+test_seqio
+test_pthreadpool
+cov_seqio
+cov_pthreadpool
+*.gcno
+*.gcda
+*.gcov
+*.tmp

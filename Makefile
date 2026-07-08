@@ -55,3 +55,32 @@ seqio.o: seqio.c
 clean:
 	rm -f *.o
 
+
+#unit tests
+TEST_DIR = test
+TEST_CFLAGS = -g -O0 -I. -I${THREAD_SITE}
+
+test: test_seqio test_pthreadpool
+	./test_seqio
+	./test_pthreadpool
+
+test_seqio: ${TEST_DIR}/test_seqio.c seqio.c seqio.h ${TEST_DIR}/minunit.h
+	${CC} ${TEST_CFLAGS} -o $@ ${TEST_DIR}/test_seqio.c seqio.c -lz -lm
+
+test_pthreadpool: ${TEST_DIR}/test_pthreadpool.c ${THREAD_SITE}/pthreadpool.c ${THREAD_SRC} ${TEST_DIR}/minunit.h
+	${CC} ${TEST_CFLAGS} -o $@ ${TEST_DIR}/test_pthreadpool.c ${THREAD_SITE}/pthreadpool.c ${THREAD_FLAGS}
+
+#coverage report (gcov) for the unit-tested modules
+coverage: clean-coverage
+	${CC} ${TEST_CFLAGS} --coverage -o cov_seqio ${TEST_DIR}/test_seqio.c seqio.c -lz -lm
+	${CC} ${TEST_CFLAGS} --coverage -o cov_pthreadpool ${TEST_DIR}/test_pthreadpool.c ${THREAD_SITE}/pthreadpool.c ${THREAD_FLAGS}
+	./cov_seqio > /dev/null
+	./cov_pthreadpool > /dev/null
+	gcov -b cov_seqio-seqio.gcda
+	gcov -b cov_pthreadpool-pthreadpool.gcda
+
+clean-coverage:
+	rm -f cov_seqio cov_pthreadpool *.gcno *.gcda *.gcov *.c.gcov
+
+clean-test: clean-coverage
+	rm -f test_seqio test_pthreadpool test_seqio_tmp_* *.tmp
